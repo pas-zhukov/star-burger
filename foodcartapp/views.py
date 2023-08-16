@@ -5,6 +5,7 @@ from django.templatetags.static import static
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Product, Order, ProductObject
 
@@ -63,6 +64,9 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
+    result, msg = check_register_order_data(request.data)
+    if not result:
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
     order_params = request.data
     order = Order.objects.create(
         customer_address=order_params['address'],
@@ -78,3 +82,27 @@ def register_order(request):
         new_product_object.save()
     order.save()
     return Response(order_params)
+
+
+def check_register_order_data(data):
+    if not isinstance(data, dict):
+        return False, 'All the data should be contained in a dictionary.'
+
+    required_fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
+    for field in required_fields:
+        if not field in data:
+            return False, f'{field.title()} field is missing.'
+
+    if not isinstance(data['products'], list):
+        return False, 'Products must be listed in s list.'
+
+    if not data['products']:
+        return False, "Products list can't be empty."
+
+    for product in data['products']:
+        if not isinstance(product['quantity'], int):
+            return False, 'Product quantity must be defined as integer.'
+        if product['quantity'] <= 0:
+            return False, 'Product quantity must be greater than 0.'
+
+    return True, 'Data is ok.'
