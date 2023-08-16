@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
 from rest_framework.serializers import ModelSerializer, ListField, ValidationError, IntegerField
 from phonenumber_field.phonenumber import PhoneNumber
 
@@ -65,7 +66,6 @@ def product_list_api(request):
 
 
 class ProductObjectSerializer(ModelSerializer):
-    quantity = IntegerField(min_value=1, source='count')
 
     class Meta:
         model = ProductObject
@@ -73,7 +73,7 @@ class ProductObjectSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = ListField(child=ProductObjectSerializer(), allow_empty=False)
+    products = ListField(write_only=True, child=ProductObjectSerializer(), allow_empty=False)
 
     def validate_phonenumber(self, value):
         phonenumber = PhoneNumber.from_string(value, 'RU')
@@ -83,7 +83,7 @@ class OrderSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
+        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 
 @api_view(['POST'])
@@ -98,10 +98,8 @@ def register_order(request):
         phonenumber=order_params['phonenumber']
     )
     for product in order_params['products']:
-        new_product = get_object_or_404(Product, id=product['product'])
-        new_product_object = ProductObject.objects.create(product=new_product,
-                                                          count=product['quantity'],
+        new_product_object = ProductObject.objects.create(product=product['product'],
+                                                          quantity=product['quantity'],
                                                           order=order)
-        new_product_object.save()
-    order.save()
-    return Response(order_params)
+    response = OrderSerializer(order).data
+    return Response(response)
