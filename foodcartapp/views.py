@@ -86,12 +86,11 @@ class OrderSerializer(ModelSerializer):
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 
-
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    order_params = request.data
+    order_params = serializer.validated_data
     order = Order.objects.create(
         address=order_params['address'],
         firstname=order_params['firstname'],
