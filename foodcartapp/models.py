@@ -131,10 +131,10 @@ class ProductObject(models.Model):
 
 
 class Order(models.Model):
-    customer_firstname = models.CharField(max_length=80, verbose_name='Имя')
-    customer_lastname = models.CharField(max_length=80, verbose_name='Фамилия')
-    customer_phonenumber = PhoneNumberField(region='RU', verbose_name='Номер телефона')
-    customer_address = models.TextField(verbose_name='Адрес доставки')
+    firstname = models.CharField(max_length=80, verbose_name='Имя')
+    lastname = models.CharField(max_length=80, verbose_name='Фамилия')
+    phonenumber = PhoneNumberField(region='RU', verbose_name='Номер телефона')
+    address = models.TextField(verbose_name='Адрес доставки')
 
     class Meta:
         verbose_name = 'Заказ'

@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.serializers import ModelSerializer, ListField, ValidationError, IntegerField
 from phonenumber_field.phonenumber import PhoneNumber
 
 from .models import Product, Order, ProductObject
@@ -63,17 +64,39 @@ def product_list_api(request):
     })
 
 
+class ProductObjectSerializer(ModelSerializer):
+    quantity = IntegerField(min_value=1, source='count')
+
+    class Meta:
+        model = ProductObject
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = ListField(child=ProductObjectSerializer(), allow_empty=False)
+
+    def validate_phonenumber(self, value):
+        phonenumber = PhoneNumber.from_string(value, 'RU')
+        if not phonenumber.is_valid():
+            raise ValidationError('Invalid phone number.')
+        return value
+
+    class Meta:
+        model = Order
+        fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
+
+
+
 @api_view(['POST'])
 def register_order(request):
-    result, msg = check_register_order_data(request.data)
-    if not result:
-        return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
     order_params = request.data
     order = Order.objects.create(
-        customer_address=order_params['address'],
-        customer_firstname=order_params['firstname'],
-        customer_lastname=order_params['lastname'],
-        customer_phonenumber=order_params['phonenumber']
+        address=order_params['address'],
+        firstname=order_params['firstname'],
+        lastname=order_params['lastname'],
+        phonenumber=order_params['phonenumber']
     )
     for product in order_params['products']:
         new_product = get_object_or_404(Product, id=product['product'])
@@ -83,41 +106,3 @@ def register_order(request):
         new_product_object.save()
     order.save()
     return Response(order_params)
-
-
-def check_register_order_data(data):
-    product_ids = [product.id for product in Product.objects.all()]
-
-    if not isinstance(data, dict):
-        return False, 'All the data should be contained in a dictionary.'
-
-    required_fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
-    for field in required_fields:
-        if field not in data:
-            return False, f'{field.title()} field is missing.'
-        if not data[field]:
-            return False, f"{field.title()} field can't be empty."
-        if field != 'products' and not isinstance(data[field], str):
-            return False, f'{field.title()} must be a string.'
-
-    if not isinstance(data['products'], list):
-        return False, 'Products must be listed in s list.'
-
-    if not data['products']:
-        return False, "Products list can't be empty."
-
-    for product in data['products']:
-
-        if product['product'] not in product_ids:
-            return False, f'Product with id={product["product"]} does not exist.'
-
-        if not isinstance(product['quantity'], int):
-            return False, 'Product quantity must be defined as integer.'
-        if product['quantity'] <= 0:
-            return False, 'Product quantity must be greater than 0.'
-
-    phonenumber = PhoneNumber.from_string(data['phonenumber'], 'RU')
-    if not phonenumber.is_valid():
-        return False, 'Phone number is invalid.'
-
-    return True, 'Data is ok.'
