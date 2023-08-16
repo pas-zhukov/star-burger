@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from phonenumber_field.phonenumber import PhoneNumber
 
 from .models import Product, Order, ProductObject
 
@@ -66,7 +67,7 @@ def product_list_api(request):
 def register_order(request):
     result, msg = check_register_order_data(request.data)
     if not result:
-        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
     order_params = request.data
     order = Order.objects.create(
         customer_address=order_params['address'],
@@ -85,13 +86,19 @@ def register_order(request):
 
 
 def check_register_order_data(data):
+    product_ids = [product.id for product in Product.objects.all()]
+
     if not isinstance(data, dict):
         return False, 'All the data should be contained in a dictionary.'
 
     required_fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
     for field in required_fields:
-        if not field in data:
+        if field not in data:
             return False, f'{field.title()} field is missing.'
+        if not data[field]:
+            return False, f"{field.title()} field can't be empty."
+        if field != 'products' and not isinstance(data[field], str):
+            return False, f'{field.title()} must be a string.'
 
     if not isinstance(data['products'], list):
         return False, 'Products must be listed in s list.'
@@ -100,9 +107,17 @@ def check_register_order_data(data):
         return False, "Products list can't be empty."
 
     for product in data['products']:
+
+        if product['product'] not in product_ids:
+            return False, f'Product with id={product["product"]} does not exist.'
+
         if not isinstance(product['quantity'], int):
             return False, 'Product quantity must be defined as integer.'
         if product['quantity'] <= 0:
             return False, 'Product quantity must be greater than 0.'
+
+    phonenumber = PhoneNumber.from_string(data['phonenumber'], 'RU')
+    if not phonenumber.is_valid():
+        return False, 'Phone number is invalid.'
 
     return True, 'Data is ok.'
