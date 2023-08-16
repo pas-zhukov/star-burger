@@ -130,11 +130,18 @@ class ProductObject(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='products')
 
 
+class OrderQuerySet(models.QuerySet):
+    def with_prices(self):
+        return self.annotate(price=models.Sum(models.F('products__product__price') * models.F('products__quantity')))
+
+
 class Order(models.Model):
     firstname = models.CharField(max_length=80, verbose_name='Имя')
     lastname = models.CharField(max_length=80, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(region='RU', verbose_name='Номер телефона')
     address = models.TextField(verbose_name='Адрес доставки')
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Заказ'
