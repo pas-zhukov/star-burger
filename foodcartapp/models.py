@@ -156,7 +156,8 @@ class Order(models.Model):
     lastname = models.CharField(max_length=80, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(region='RU', verbose_name='Номер телефона')
     address = models.TextField(verbose_name='Адрес доставки')
-    status = models.IntegerField(default=0, choices=order_statuses, db_index=True)
+    status = models.IntegerField(default=0, choices=order_statuses, db_index=True, verbose_name='Статус заказа')
+    comment = models.TextField(verbose_name='Комментарий к заказу', blank=True)
 
     objects = OrderQuerySet.as_manager()
 
