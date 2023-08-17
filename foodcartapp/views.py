@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.serializers import ModelSerializer, ListField, ValidationError, IntegerField
 from phonenumber_field.phonenumber import PhoneNumber
+from django.db import transaction
 
 from .models import Product, Order, ProductObject
 
@@ -100,6 +101,7 @@ def register_order(request):
     for product in order_params['products']:
         new_product_object = ProductObject.objects.create(product=product['product'],
                                                           quantity=product['quantity'],
-                                                          order=order)
+                                                          order=order,
+                                                          fixed_price=product['product'].price)
     response = OrderSerializer(order).data
     return Response(response)
