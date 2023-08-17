@@ -153,6 +153,12 @@ class Order(models.Model):
                       (2, 'В доставке'),
                       (3, 'Завершён')]
 
+    payment_methods = [
+        (0, 'Не определён'),
+        (1, 'Электронно'),
+        (2, 'Наличностью')
+    ]
+
     firstname = models.CharField(max_length=80, verbose_name='Имя')
     lastname = models.CharField(max_length=80, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(region='RU', verbose_name='Номер телефона')
@@ -160,11 +166,14 @@ class Order(models.Model):
     status = models.IntegerField(default=0, choices=order_statuses, db_index=True, verbose_name='Статус заказа')
     comment = models.TextField(verbose_name='Комментарий к заказу', blank=True)
 
-    objects = OrderQuerySet.as_manager()
-
     created = models.DateTimeField(default=timezone.now, verbose_name='Дата и время создания')
     called_at = models.DateTimeField(verbose_name='Дата и время звонка менеджера', null=True, blank=True)
     delivered_at = models.DateTimeField(verbose_name='Дата и время доставки', null=True, blank=True)
+
+    payment_method = models.IntegerField(default=0, choices=payment_methods, verbose_name='Метод оплаты', db_index=True)
+
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Заказ'
