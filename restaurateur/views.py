@@ -1,14 +1,19 @@
+import os
+
+import requests
+from geopy import distance
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.conf import settings
 
 from foodcartapp.models import Product, Restaurant, Order
+
 
 
 class Login(forms.Form):
@@ -93,9 +98,17 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     unfinished_orders = Order.objects.filter(~Q(status=3)).with_prices().prefetch_related('products__product')
-    restaurants = Restaurant.objects.all().prefetch_related('menu_items')
     for order in unfinished_orders:
-        order.restaurants = get_available_restaurants(order, restaurants)
+        restaurants = Restaurant.objects.all().prefetch_related('menu_items')
+        order_restaurants = get_available_restaurants(order, restaurants)
+        try:
+            order_coords = fetch_coordinates(order.address, settings.YANDEX_GEOCODER_KEY)
+            for restaurant in order_restaurants:
+                restaurant_coords = fetch_coordinates(restaurant.address, settings.YANDEX_GEOCODER_KEY)
+                restaurant.order_distance = round(distance.distance(restaurant_coords, order_coords).km, 2)
+            order.restaurants = sorted(order_restaurants, key=lambda r: r.order_distance)
+        except BrokenPipeError:  # TODO: FIX THIS PLEASE
+            order.restaurants = None
 
     return render(request, template_name='order_items.html', context={
         'order_items': unfinished_orders,
@@ -112,3 +125,21 @@ def get_available_restaurants(order, restaurants):
         if set(products).issubset(menu_products):
             available_restaurants.append(restaurant)
     return available_restaurants
+
+
+def fetch_coordinates(address, apikey):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        raise BrokenPipeError  # TODO: выбрать ошибку получше
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
