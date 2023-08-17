@@ -1,5 +1,3 @@
-import os
-
 import requests
 from geopy import distance
 from django import forms
@@ -9,12 +7,11 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.conf import settings
 
 from foodcartapp.models import Product, Restaurant, Order
-
-
+from locations.models import Place
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -107,8 +104,8 @@ def view_orders(request):
                 restaurant_coords = fetch_coordinates(restaurant.address, settings.YANDEX_GEOCODER_KEY)
                 restaurant.order_distance = round(distance.distance(restaurant_coords, order_coords).km, 2)
             order.restaurants = sorted(order_restaurants, key=lambda r: r.order_distance)
-        except BrokenPipeError:  # TODO: FIX THIS PLEASE
-            order.restaurants = None
+        except GEOCoderError:
+            order.restaurants = 'ERROR'
 
     return render(request, template_name='order_items.html', context={
         'order_items': unfinished_orders,
@@ -128,18 +125,29 @@ def get_available_restaurants(order, restaurants):
 
 
 def fetch_coordinates(address, apikey):
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(base_url, params={
-        "geocode": address,
-        "apikey": apikey,
-        "format": "json",
-    })
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+    try:
+        place = Place.objects.get(address=address)
+    except Place.DoesNotExist:
+        base_url = "https://geocode-maps.yandex.ru/1.x"
+        response = requests.get(base_url, params={
+            "geocode": address,
+            "apikey": apikey,
+            "format": "json",
+        })
+        response.raise_for_status()
+        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
-    if not found_places:
-        raise BrokenPipeError  # TODO: выбрать ошибку получше
+        if not found_places:
+            raise GEOCoderError
 
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
+        most_relevant = found_places[0]
+        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+        place = Place.objects.create(address=address,
+                                     lon=lon,
+                                     lat=lat)
+    return place.lon, place.lat
+
+
+class GEOCoderError(Exception):
+    def __init__(self, message: str = 'Error while locating specified address.'):
+        super().__init__(message)

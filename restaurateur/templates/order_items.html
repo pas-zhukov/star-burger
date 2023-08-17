@@ -39,7 +39,7 @@
             {% if item.restaurant %}
               <p>Готовит {{ item.restaurant }}</p>
             {% else %}
-              {% if item.restaurants %}
+              {% if item.restaurants and item.restaurants != 'ERROR' %}
                 <details>
                   <p>Может быть приготовлен ресторанами:</p>
                   <ul>
@@ -48,8 +48,10 @@
                     {% endfor %}
                   </ul>
                 </details>
-              {% else %}
+              {% elif item.restaurants == 'ERROR' %}
                 <p>Ошибка определения координат.</p>
+              {% else %}
+                <p>Нет ресторанов, готовых доставить заказ.</p>
               {% endif %}
             {% endif %}
           </th>

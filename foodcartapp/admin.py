@@ -5,13 +5,14 @@ from django.utils.html import format_html
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.shortcuts import redirect
+from django.conf import settings
 
 from .models import Product
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
 from .models import Order, ProductObject
-import star_burger.settings as settings
+
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
