@@ -99,7 +99,6 @@ def register_order(request):
         lastname=order_params['lastname'],
         phonenumber=order_params['phonenumber']
     )
-    0/0
     for product in order_params['products']:
         new_product_object = ProductObject.objects.create(product=product['product'],
                                                           quantity=product['quantity'],
