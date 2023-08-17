@@ -128,11 +128,22 @@ class ProductObject(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name='Товар')
     quantity = models.IntegerField(verbose_name='Количество')
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='products')
+    fixed_price = models.DecimalField(decimal_places=2,
+                                      max_digits=5,
+                                      validators=[MinValueValidator(0, 0)],
+                                      verbose_name='Стоимость позиции')
+
+    class Meta:
+        verbose_name = 'Позиция'
+        verbose_name_plural = 'Позиции'
+
+    def __str__(self):
+        return f'{self.product.name} - {self.fixed_price} р - {self.quantity} шт'
 
 
 class OrderQuerySet(models.QuerySet):
     def with_prices(self):
-        return self.annotate(price=models.Sum(models.F('products__product__price') * models.F('products__quantity')))
+        return self.annotate(price=models.Sum(models.F('products__fixed_price') * models.F('products__quantity')))
 
 
 class Order(models.Model):

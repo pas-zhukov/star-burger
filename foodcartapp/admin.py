@@ -115,3 +115,4 @@ class OrderProductsInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderProductsInline]
+
