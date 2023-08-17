@@ -1,13 +1,8 @@
-import json
-
 from django.http import JsonResponse
 from django.templatetags.static import static
-from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.renderers import JSONRenderer
-from rest_framework.serializers import ModelSerializer, ListField, ValidationError, IntegerField
+from rest_framework.serializers import ModelSerializer, ListField, ValidationError
 from phonenumber_field.phonenumber import PhoneNumber
 from django.db import transaction
 
