@@ -92,7 +92,23 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    unfinished_orders = Order.objects.filter(~Q(status=3)).with_prices().prefetch_related('products__product')
+    restaurants = Restaurant.objects.all().prefetch_related('menu_items')
+    for order in unfinished_orders:
+        order.restaurants = get_available_restaurants(order, restaurants)
+
     return render(request, template_name='order_items.html', context={
-        'order_items': Order.objects.filter(~Q(status=3)).with_prices(),
-        'redirect_url': request.path
+        'order_items': unfinished_orders,
+        'redirect_url': request.path,
     })
+
+
+def get_available_restaurants(order, restaurants):
+    available_restaurants = []
+    products = [product.product for product in order.products.all()]
+    for restaurant in restaurants:
+        menu_items = restaurant.menu_items.filter(availability=True).select_related('product')
+        menu_products = [item.product for item in menu_items]
+        if set(products).issubset(menu_products):
+            available_restaurants.append(restaurant)
+    return available_restaurants
