@@ -6,7 +6,7 @@ from rest_framework.serializers import ModelSerializer, ListField, ValidationErr
 from phonenumber_field.phonenumber import PhoneNumber
 from django.db import transaction
 
-from .models import Product, Order, ProductObject
+from .models import Product, Order, OrderedProduct
 
 
 def banners_list_api(request):
@@ -64,7 +64,7 @@ def product_list_api(request):
 class ProductObjectSerializer(ModelSerializer):
 
     class Meta:
-        model = ProductObject
+        model = OrderedProduct
         fields = ['product', 'quantity']
 
 
@@ -95,9 +95,9 @@ def register_order(request):
         phonenumber=order_params['phonenumber']
     )
     for product in order_params['products']:
-        new_product_object = ProductObject.objects.create(product=product['product'],
-                                                          quantity=product['quantity'],
-                                                          order=order,
-                                                          fixed_price=product['product'].price)
+        new_product_object = OrderedProduct.objects.create(product=product['product'],
+                                                           quantity=product['quantity'],
+                                                           order=order,
+                                                           fixed_price=product['product'].price)
     response = OrderSerializer(order).data
     return Response(response)

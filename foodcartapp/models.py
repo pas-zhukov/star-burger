@@ -125,7 +125,7 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-class ProductObject(models.Model):
+class OrderedProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name='Товар')
     quantity = models.IntegerField(verbose_name='Количество')
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='products')
