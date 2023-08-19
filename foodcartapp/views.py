@@ -71,12 +71,6 @@ class ProductObjectSerializer(ModelSerializer):
 class OrderSerializer(ModelSerializer):
     products = ListField(write_only=True, child=ProductObjectSerializer(), allow_empty=False)
 
-    def validate_phonenumber(self, value):
-        phonenumber = PhoneNumber.from_string(value, 'RU')
-        if not phonenumber.is_valid():
-            raise ValidationError('Invalid phone number.')
-        return value
-
     def create(self, validated_data):
         products = validated_data.pop('products')
         order = Order.objects.create(**validated_data)
