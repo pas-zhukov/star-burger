@@ -77,6 +77,18 @@ class OrderSerializer(ModelSerializer):
             raise ValidationError('Invalid phone number.')
         return value
 
+    def create(self, validated_data):
+        products = validated_data.pop('products')
+        order = Order.objects.create(**validated_data)
+        for product in products:
+            new_product_object = OrderedProduct.objects.create(
+                product=product['product'],
+                quantity=product['quantity'],
+                order=order,
+                fixed_price=product['product'].price
+            )
+        return order
+
     class Meta:
         model = Order
         fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
@@ -87,17 +99,4 @@ class OrderSerializer(ModelSerializer):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    order_params = serializer.validated_data
-    order = Order.objects.create(
-        address=order_params['address'],
-        firstname=order_params['firstname'],
-        lastname=order_params['lastname'],
-        phonenumber=order_params['phonenumber']
-    )
-    for product in order_params['products']:
-        new_product_object = OrderedProduct.objects.create(product=product['product'],
-                                                           quantity=product['quantity'],
-                                                           order=order,
-                                                           fixed_price=product['product'].price)
-    response = OrderSerializer(order).data
-    return Response(response)
+    return Response(serializer.data, 201)
