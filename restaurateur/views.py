@@ -1,4 +1,5 @@
 import requests
+import logging
 from geopy import distance
 from django import forms
 from django.shortcuts import redirect, render
@@ -12,6 +13,9 @@ from django.conf import settings
 
 from foodcartapp.models import Product, Restaurant, Order
 from locations.models import Place
+
+
+logger = logging.getLogger('django')
 
 
 class Login(forms.Form):
@@ -107,6 +111,9 @@ def view_orders(request):
             order.restaurants = sorted(order_restaurants, key=lambda r: r.order_distance)
         except GEOCoderError:
             order.restaurants = 'ERROR'
+        except Exception as ex:
+            order.restaurants = 'ERROR'
+            logger.error(ex)
 
     return render(request, template_name='order_items.html', context={
         'order_items': unfinished_orders,
