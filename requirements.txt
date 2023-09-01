@@ -20,5 +20,5 @@ django-filter~=23.2
 djangorestframework~=3.14.0
 requests~=2.31.0
 phonenumberslite~=8.13.18
-
+django-phonenumber-field
 geopy~=2.3.0

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django.db import transaction
 
 from .models import Product
-from serializers import OrderSerializer
+from foodcartapp.serializers import OrderSerializer
 
 
 def banners_list_api(request):
