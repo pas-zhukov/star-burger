@@ -2,7 +2,9 @@ django==3.2.15
 django-debug-toolbar==3.2.1
 Pillow==9.0.0
 environs[django]==9.3.2
-
+dj-database-url
+rollbar
+psycopg2-binary
 pip~=22.0.2
 wheel~=0.37.1
 pytz~=2023.3
