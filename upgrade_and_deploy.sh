@@ -20,6 +20,7 @@ echo "Install Python dependencies."
 
 echo "Install NodeJS libraries."
 npm ci --dev
+npm audit fix
 
 echo "Build js code."
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
@@ -38,7 +39,7 @@ echo "Send deployment info to Rollbar."
 sha=$(git rev-parse HEAD)
 curl --request POST \
      --url https://api.rollbar.com/api/1/deploy \
-     --header "X-Rollbar-Access-Token: '${ROLLBAR_TOKEN}'" \
+     --header "X-Rollbar-Access-Token: ${ROLLBAR_TOKEN}" \
      --header 'accept: application/json' \
      --header 'content-type: application/json' \
      --data '
