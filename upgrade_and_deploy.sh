@@ -2,9 +2,6 @@
 set -e
 source ./.env #import environment variables
 
-working_directory=$(pwd)
-echo "Cd to /opt/projects/star-burger..."
-cd /opt/projects/star-burger/
 
 echo "Check for updates on remote git repository."
 git fetch
@@ -52,4 +49,3 @@ curl --request POST \
             '
 
 echo "Deployment completed!"
-cd $working_directory
