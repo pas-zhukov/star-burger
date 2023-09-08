@@ -6,6 +6,7 @@ source ./.env #import environment variables
 echo "Check for updates on remote git repository."
 git fetch
 ahead_commits=$(git rev-list HEAD...origin/master --count)
+# shellcheck disable=SC2071
 if [[ $ahead_commits > 0 ]]
 then
   echo "Pulling new updates."
@@ -34,6 +35,7 @@ echo "Apply Django migrations."
 echo "Restart systemd services."
 systemctl restart star-burger.service
 systemctl restart postgresql.service
+systemctl reload nginx.service
 
 echo "Send deployment info to Rollbar."
 sha=$(git rev-parse HEAD)
