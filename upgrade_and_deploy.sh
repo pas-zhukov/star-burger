@@ -44,8 +44,10 @@ curl --request POST \
      --header 'content-type: application/json' \
      --data '
               {
-                "environment": "production",
-                "revision": "'${sha}'"
+                "environment": "'"${ROLLBAR_ENVIRONMENT}"'",
+                "local_username": "'"${USER}"'",
+                "revision": "'"${sha}"'",
+                "status": "succeeded"
               }
             '
 
