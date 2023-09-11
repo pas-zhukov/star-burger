@@ -30,7 +30,7 @@ echo "Collect Django static."
 ./venv/bin/python3 manage.py collectstatic --noinput
 
 echo "Apply Django migrations."
-./venv/bin/python3 manage.py migrate
+./venv/bin/python3 manage.py migrate --noinput
 
 echo "Restart systemd services."
 systemctl restart star-burger.service
