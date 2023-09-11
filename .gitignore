@@ -144,3 +144,5 @@ cython_debug/
 .parcel-cache/
 .idea
 test.py
+db.json
+staticfiles
