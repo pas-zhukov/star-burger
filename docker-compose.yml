@@ -9,7 +9,7 @@ services:
 
   frontend:
     build:
-      context: frontend
+      context: .
       dockerfile: Dockerfile.frontend
     restart: on-failure
     volumes:
@@ -17,7 +17,7 @@ services:
 
   web:
     build:
-      context: web
+      context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:

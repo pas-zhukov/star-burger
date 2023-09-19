@@ -1,4 +1,4 @@
-FROM node:12.2.2 as frontend
+FROM node:12.2 as frontend
 
 ENV APP_HOME = /opt/star-burger/app
 
