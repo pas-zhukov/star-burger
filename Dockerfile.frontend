@@ -1,0 +1,15 @@
+FROM node:12.2.2 as frontend
+
+ENV APP_HOME = /opt/star-burger/app
+
+RUN mkdir -p $APP_HOME
+
+WORKDIR $APP_HOME
+COPY package.json ./
+COPY package-lock.json ./
+COPY bundles ./bundles
+COPY bundles-src ./bundles-src
+
+RUN npm ci --include=dev
+
+RUN ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"

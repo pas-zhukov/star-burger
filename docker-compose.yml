@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:latest-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile.frontend
+    restart: on-failure
+    volumes:
+      - bundles_volume:/opt/star-burger/app/bundles
+
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - static_volume:/opt/star-burger/app/staticfiles
+      - media_volume:/opt/star-burger/app/media
+      - bundles_volume:/opt/star-burger/app/bundles
+    ports:
+      - 8000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - frontend
+    command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000 --workers 3
+
+  nginx:
+    image: nginx-alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx:/etc/nginx/templates
+      - ./nginx/ssl:/etc/ssl
+      - static_volume:/opt/star-burger/app/staticfiles
+      - media_volume:/opt/star-burger/app/media
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_HOST=${YOUR_DOMAIN}
+      - NGINX_PORT=80
+      - SSL_DOMAIN=${DOMAIN_NAME}
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  bundles_volume:
