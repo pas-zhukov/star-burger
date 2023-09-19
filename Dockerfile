@@ -15,7 +15,7 @@ RUN mkdir -p $APP_HOME/media
 
 #  Копируем данные git репозитория в контейнер
 WORKDIR $HOME
-COPY .grt ./.git
+COPY .git ./.git
 
 #  Копируем файл с зависимостями
 WORKDIR $APP_HOME
